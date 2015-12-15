@@ -12,10 +12,9 @@ class FollowService::App < Sinatra::Base
 
   post '/users/:id/follow' do
 
-    
     follow = FollowService::Follow.create!(
       follower_id: params["id"],
-      followed_id: params["follow_id"]
+      followee_id: params["follow_id"]
     )
 
     content_type :json

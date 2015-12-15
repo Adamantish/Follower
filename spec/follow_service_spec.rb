@@ -21,6 +21,7 @@ describe FollowService do
   describe "following a user" do
 
     before do
+      
       post ('users/' + @keith.id.to_s + '/follow'), { follow_id: @fry.id }
     end
 
@@ -36,7 +37,7 @@ describe FollowService do
       expect(last_response.content_type).to eq('application/json')
       json = JSON(last_response.body)
       expect(json['follower_id']).to eq @keith.id
-      expect(json['followed_id']).to eq @fry.id
+      expect(json['followee_id']).to eq @fry.id
       expect(json['id']).to_not be_nil
     end
   end
