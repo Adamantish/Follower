@@ -21,4 +21,14 @@ class FollowService::App < Sinatra::Base
     [201, follow.to_json]
   end
 
+  get '/users/:id/followers' do
+
+    id = params['id']
+    binding.pry
+    followers = FollowService::User.find(id).followers
+
+    content_type :json
+    [201, followers.to_json]
+  end
+
 end
