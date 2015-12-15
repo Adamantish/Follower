@@ -10,10 +10,12 @@ class FollowService::App < Sinatra::Base
     ActiveRecord::Base.establish_connection(db_config["test"])
   end
 
-  post '/follows' do
+  post '/users/:id/follow' do
+
+    
     follow = FollowService::Follow.create!(
-      follower_id: params["follower_id"],
-      followed_id: params["followed_id"]
+      follower_id: params["id"],
+      followed_id: params["follow_id"]
     )
 
     content_type :json

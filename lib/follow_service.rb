@@ -4,6 +4,7 @@ require "active_record"
 
 require "follow_service/version"
 require "follow_service/follow"
+require "follow_service/user"
 require "follow_service/app"
 
 
