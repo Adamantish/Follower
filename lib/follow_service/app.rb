@@ -10,6 +10,12 @@ class FollowService::App < Sinatra::Base
     ActiveRecord::Base.establish_connection(db_config["test"])
   end
 
+  before do
+    unless env["HTTP_FOLLOW_API_VERSION"] == FollowService::VERSION
+      halt 401, {'Content-Type' => 'text/plain'}, "Be sure to set the Follow Service API version to #{FollowService::VERSION} in the headers"
+    end
+  end
+
   post '/users/:id/follow' do
 
     follow = FollowService::Follow.create!(
