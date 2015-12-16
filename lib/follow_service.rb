@@ -1,6 +1,7 @@
 require "sinatra"
 require "json"
 require "active_record"
+require "digest"
 
 require "follow_service/version"
 require "follow_service/follow"

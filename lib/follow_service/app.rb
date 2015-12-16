@@ -24,11 +24,38 @@ class FollowService::App < Sinatra::Base
   get '/users/:id/followers' do
 
     id = params['id']
-    binding.pry
-    followers = FollowService::User.find(id).followers
+    user = FollowService::User.find(id)
+
+    # This is not foolproof. If the user were to refresh during a second when there were an equal number
+    # of follows and unfollows they'd not be alerted to the change on subsequent refreshes.
+    # if this were being paged I'd etag the digest of the page instead. 
+    # Alternatively a more precise time measure could be used or a DB rowversion.
+
+    latest = user.follows_of_me.latest
+    count = user.follows_of_me.count
+
+    etag latest.to_s + count.to_s
+
+    followers = user.followers
 
     content_type :json
     [201, followers.to_json]
+  end
+
+  get '/users/:id/followees' do
+
+    id = params['id']
+    user = FollowService::User.find(id)
+    latest = user.follows_from_me.latest
+    count = user.follows_from_me.count
+    
+    etag latest.to_s + count.to_s
+    
+    followees = user.followees
+
+    content_type :json
+    [201, followees.to_json]
+
   end
 
 end
