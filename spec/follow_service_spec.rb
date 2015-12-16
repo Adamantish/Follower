@@ -133,6 +133,23 @@ describe FollowService do
 
         expect(json.last["id"]).to eq @barry.id
       end
+
+      describe "performance characteristics" do
+
+        it "etags efficiently when a user has 200,000 followers" do
+          FollowService::Follow.connection.execute "
+              INSERT INTO follows(followee_id, follower_id, created_datetime)
+              SELECT #{@fry.id}, #{@keith.id}, current_timestamp FROM generate_series(1,100000);
+            "
+          binding.pry
+          get "/users/" + @id + "/followers"
+          @last_etag = last_response["Etag"]
+          binding.pry
+          get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
+
+
+        end
+      end
     end
   end
 end
