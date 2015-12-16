@@ -8,7 +8,13 @@ RSpec.configure do |conf|
   conf.include Rack::Test::Methods
 end
 
+
+
 RSpec.configure do |config|
+
+  config.before(:each) do
+    # request.env['Accept'] = "stuff"
+  end
 
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction

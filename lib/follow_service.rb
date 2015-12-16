@@ -1,4 +1,5 @@
 require "sinatra"
+require "sinatra/cross_origin"
 require "json"
 require "active_record"
 require "digest/sha1"

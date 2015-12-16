@@ -18,7 +18,9 @@ describe FollowService do
     end
 
     it "cannot be used with the wrong version number" do
-      header "FOLLOW_API_VERSION", "0.0.-1"
+      binding.pry
+      # header "FOLLOW_API_VERSION", "0.0.-1"
+      header "Accept", "application/follow_service_api_v0.0.-1+json"
       get 'users/1/followers'
       expect(last_response.status).to eq 401
     end
@@ -29,7 +31,8 @@ describe FollowService do
     
     before do
 
-      header "FOLLOW_API_VERSION", "0.0.0"
+      header "Accept", "application/follow_service_api_v0.0.0+json"
+      # header "FOLLOW_API_VERSION", "0.0.0"
 
       @fry = FollowService::User.create!()
       @keith = FollowService::User.create!()
@@ -47,7 +50,7 @@ describe FollowService do
 
       before do
         id = @keith.id.to_s
-        post ('users/' + id + '/follow'), { follow_id: @fry.id }
+        post ('users/' + id + '/follow'), { followee_id: @fry.id }
       end
 
       it "returns a status code of 201" do
@@ -115,7 +118,7 @@ describe FollowService do
       end
 
       it "still returns 304 if there are changes to to Follows which affect a different section of data" do
-        post ('users/' + @id + '/follow'), { follow_id: @barry.id }
+        post ('users/' + @id + '/follow'), { followee_id: @barry.id }
 
         # Fry has followed another person but has unchanged followers.
         get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
@@ -125,7 +128,7 @@ describe FollowService do
       end
 
       it "returns data again when there is a new follower" do
-        post ('users/' + @barry.id.to_s + '/follow'), { follow_id: @id }
+        post ('users/' + @barry.id.to_s + '/follow'), { followee_id: @id }
         get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
 
         expect(last_response.status).to eq 201
@@ -136,7 +139,7 @@ describe FollowService do
 
       describe "performance characteristics" do
 
-        it "etags efficiently when a user has 200,000 followers" do
+        it "etags efficiently when a user has 1,000,000 followers" do
           FollowService::Follow.connection.execute "
               INSERT INTO follows(followee_id, follower_id, created_datetime)
               SELECT #{@fry.id}, #{@keith.id}, current_timestamp FROM generate_series(1,100000);
