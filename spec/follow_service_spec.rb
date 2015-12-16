@@ -25,7 +25,7 @@ describe FollowService do
 
   end
 
-  describe "RESTful methods" do 
+  describe "RESTful route usage" do 
     
     before do
 
@@ -75,6 +75,7 @@ describe FollowService do
 
         expect(last_response.content_type).to eq('application/json')
         json = JSON(last_response.body)
+
         expect(json.length).to eq 2
         expect(json.first["id"]).to eq @keith.id
         expect(json.last["id"]).to eq @gaga.id
@@ -86,6 +87,7 @@ describe FollowService do
 
         expect(last_response.content_type).to eq('application/json')
         json = JSON(last_response.body)
+
         expect(json.length).to eq 1
         expect(json.first["id"]).to eq @gaga.id
       end
@@ -100,12 +102,11 @@ describe FollowService do
         @last_etag = last_response["Etag"]
 
         @id = @fry.id.to_s
-        get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
-        
+        get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag } 
       end
 
       it "returns an etag" do 
-        expect(Date.parse(@last_etag).is_a? Date).to be true
+        expect(@last_etag).to_not be nil
       end
 
       it "returns a 304 status if the request is repeated and followers list hasn't changed" do
@@ -114,8 +115,8 @@ describe FollowService do
       end
 
       it "still returns 304 if there are changes to to Follows which affect a different section of data" do
-    
         post ('users/' + @id + '/follow'), { follow_id: @barry.id }
+
         # Fry has followed another person but has unchanged followers.
         get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
 
@@ -132,8 +133,6 @@ describe FollowService do
 
         expect(json.last["id"]).to eq @barry.id
       end
-
     end
-
   end
 end

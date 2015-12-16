@@ -7,9 +7,6 @@ describe FollowService::Follow do
     FollowService::Follow.create!(follower_id: 1, followee_id: 3)
 
   end
-  it "sets the Created_datetime to now before save" do
-
-  end
 
   it "can find the time of last follow with a scope" do
 
