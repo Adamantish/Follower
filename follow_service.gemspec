@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activerecord", "~> 4.0"
   spec.add_dependency "pg"
   spec.add_dependency "digest"
+  spec.add_dependency "activesupport"
   spec.add_dependency "sinatra-cross_origin", "~> 0.3.1"
 
   spec.add_development_dependency "bundler"

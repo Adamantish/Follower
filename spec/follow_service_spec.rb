@@ -50,7 +50,8 @@ describe FollowService do
 
       before do
         id = @keith.id.to_s
-        post ('users/' + id + '/follow'), { followee_id: @fry.id }
+        binding.pry
+        post ('users/' + @fry.id.to_s + '/follow'), { follower_id: id }
       end
 
       it "returns a status code of 201" do
@@ -64,8 +65,9 @@ describe FollowService do
       it "returns JSON of the new follow relationship" do
         expect(last_response.content_type).to eq('application/json')
         json = JSON(last_response.body)
-        expect(json['follower_id']).to eq @keith.id
-        expect(json['followee_id']).to eq @fry.id
+        binding.pry
+        expect(json['followerId']).to eq @keith.id
+        expect(json['followeeId']).to eq @fry.id
         expect(json['id']).to_not be_nil
       end
     end
@@ -118,7 +120,7 @@ describe FollowService do
       end
 
       it "still returns 304 if there are changes to to Follows which affect a different section of data" do
-        post ('users/' + @id + '/follow'), { followee_id: @barry.id }
+        post ('users/' + @barry.id.to_s + '/follow'), { follower_id: @id }
 
         # Fry has followed another person but has unchanged followers.
         get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
@@ -128,7 +130,7 @@ describe FollowService do
       end
 
       it "returns data again when there is a new follower" do
-        post ('users/' + @barry.id.to_s + '/follow'), { followee_id: @id }
+        post ('users/' + @id + '/follow'), { follower_id: @barry.id  }
         get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
 
         expect(last_response.status).to eq 201

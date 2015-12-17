@@ -1,4 +1,6 @@
 class FollowService::App < Sinatra::Base
+  
+  include ActiveSupport::Inflector
 
   register Sinatra::CrossOrigin
 
@@ -25,27 +27,65 @@ class FollowService::App < Sinatra::Base
   end
 
   options "*" do 
-    require 'pry'
+    # require 'pry'
     # binding.pry
+    allowed_origins = ["http://localhost:3000", "http://localhost:8888"]
+    request_origin = response.headers["Access-Control-Allow-Origin"]
+
+    if allowed_origins.include? request_origin
+      response.headers["Access-Control-Allow-Origin"] = request_origin
+    end
+    
     response.headers["Allow"] = "GET,POST,OPTIONS"
-    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Accept"
   end
 
-  post '/users/:originating_id/follow' do |originating_id|
+  post '/users/:followee_id/follow' do |followee_id|
+    # require 'pry'
 
-    require 'pry'
+    # temp hardcode
+    follower_id = params["follower_id"] || 1
 
     follow = FollowService::Follow.create!(
-      follower_id: FollowService::User.find_or_create_by(id: originating_id ).id,
-      followee_id: FollowService::User.find_or_create_by(id: params["followee_id"] ).id
+      followee_id: FollowService::User.find_or_create_by(id: followee_id ).id,
+      follower_id: FollowService::User.find_or_create_by(id: follower_id ).id
     )
 
+    # TODO: put this in a helper
+    camel_follow = {}
+    follow.attributes.map do |key, val|
+      camel_follow[key.camelize(:lower)] = val
+    end
+    
+    follow = camel_follow.to_json
+
     content_type :json
-    [201, follow.to_json]
+    [201, follow]
+  end
+
+  get '/users/:id/follow' do
+    # Currently this is just an alias of get followERs
+    id = params['id']
+    user = FollowService::User.find(id)
+
+    latest = user.follows_of_me.latest
+    count = user.follows_of_me.count
+
+    etag latest.to_s + count.to_s
+
+    json_followers = user.followers.to_json
+
+    ## if this were being paged I'd etag the digest of the page instead. 
+    # etag Digest::SHA1.digest(json_followers)
+
+    content_type :json
+    [201, json_followers]
   end
 
   get '/users/:id/followers' do
+
+    # require 'pry'
+    # binding.pry
 
     id = params['id']
     user = FollowService::User.find(id)
@@ -81,6 +121,10 @@ class FollowService::App < Sinatra::Base
 
     content_type :json
     [201, followees.to_json]
+
+  end
+
+  def create_follow
 
   end
 
