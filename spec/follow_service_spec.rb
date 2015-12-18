@@ -13,7 +13,7 @@ describe FollowService do
     end
 
     it "cannot be used without a specified version number" do
-      get 'users/1/followers'
+      get 'users/1/follow'
       expect(last_response.status).to eq 401
     end
 
@@ -21,7 +21,7 @@ describe FollowService do
       binding.pry
       # header "FOLLOW_API_VERSION", "0.0.-1"
       header "Accept", "application/follow_service_api_v0.0.-1+json"
-      get 'users/1/followers'
+      get 'users/1/follow'
       expect(last_response.status).to eq 401
     end
 
@@ -39,7 +39,7 @@ describe FollowService do
       @gaga = FollowService::User.create!()
       @barry = FollowService::User.create!()
 
-      @keith.followees << @fry
+      @keith.followers << @fry
       @keith.followees << @gaga
       @gaga.followees << @fry
       @gaga.followers << @fry
@@ -49,9 +49,8 @@ describe FollowService do
     describe "following a user" do
 
       before do
-        id = @keith.id.to_s
-        binding.pry
-        post ('users/' + @fry.id.to_s + '/follow'), { follower_id: id }
+        @id = @keith.id.to_s
+        post ('users/' + @fry.id.to_s + '/follow'), { follower_id: @id }
       end
 
       it "returns a status code of 201" do
@@ -62,28 +61,46 @@ describe FollowService do
         expect(FollowService::Follow.count).to eq(5)
       end
 
+      it "cannot duplicate a follow" do
+        post ('users/' + @fry.id.to_s + '/follow'), { follower_id: @id }
+        expect(FollowService::Follow.count).to eq(5)
+      end
+
       it "returns JSON of the new follow relationship" do
         expect(last_response.content_type).to eq('application/json')
         json = JSON(last_response.body)
-        binding.pry
         expect(json['followerId']).to eq @keith.id
         expect(json['followeeId']).to eq @fry.id
         expect(json['id']).to_not be_nil
       end
     end
 
+    describe "DELETE follow" do
+
+      before do
+        @id = @gaga.id.to_s
+      end
+
+      it "destroys a follow" do
+
+        delete ('users/' + @fry.id.to_s + '/follow'), { follower_id: @id }
+
+        expect(FollowService::Follow.count).to eq(4)
+      end
+
+    end
+
     describe "viewing followers for a user" do 
 
       it "returns JSON of all a user's followers" do 
         id = @fry.id.to_s
-        get "/users/" + id + "/followers"
+        get "/users/" + id + "/follow"
 
         expect(last_response.content_type).to eq('application/json')
         json = JSON(last_response.body)
 
-        expect(json.length).to eq 2
-        expect(json.first["id"]).to eq @keith.id
-        expect(json.last["id"]).to eq @gaga.id
+        expect(json.length).to eq 1
+        expect(json.first["id"]).to eq @gaga.id
       end
 
       it "returns JSON of all a user's followees" do 
@@ -93,8 +110,8 @@ describe FollowService do
         expect(last_response.content_type).to eq('application/json')
         json = JSON(last_response.body)
 
-        expect(json.length).to eq 1
-        expect(json.first["id"]).to eq @gaga.id
+        expect(json.length).to eq 2
+        expect(json.first["id"]).to eq @keith.id
       end
     end
 
@@ -102,12 +119,12 @@ describe FollowService do
 
       before do 
         id = @fry.id.to_s
-        get "/users/" + id + "/followers"
+        get "/users/" + id + "/follow"
 
         @last_etag = last_response["Etag"]
 
         @id = @fry.id.to_s
-        get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag } 
+        get "/users/" + @id + "/follow", {}, { "HTTP_IF_NONE_MATCH" => @last_etag } 
       end
 
       it "returns an etag" do 
@@ -123,7 +140,7 @@ describe FollowService do
         post ('users/' + @barry.id.to_s + '/follow'), { follower_id: @id }
 
         # Fry has followed another person but has unchanged followers.
-        get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
+        get "/users/" + @id + "/follow", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
 
         expect(last_response.status).to eq 304
         expect(last_response.body).to eq ""
@@ -131,9 +148,9 @@ describe FollowService do
 
       it "returns data again when there is a new follower" do
         post ('users/' + @id + '/follow'), { follower_id: @barry.id  }
-        get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
+        get "/users/" + @id + "/follow", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
 
-        expect(last_response.status).to eq 201
+        expect(last_response.status).to eq 200
         json = JSON(last_response.body)
 
         expect(json.last["id"]).to eq @barry.id
@@ -147,11 +164,10 @@ describe FollowService do
               SELECT #{@fry.id}, #{@keith.id}, current_timestamp FROM generate_series(1,100000);
             "
           binding.pry
-          get "/users/" + @id + "/followers"
+          get "/users/" + @id + "/follow"
           @last_etag = last_response["Etag"]
           binding.pry
-          get "/users/" + @id + "/followers", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
-
+          get "/users/" + @id + "/follow", {}, { "HTTP_IF_NONE_MATCH" => @last_etag }
 
         end
       end

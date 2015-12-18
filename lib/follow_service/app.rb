@@ -40,13 +40,25 @@ class FollowService::App < Sinatra::Base
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Accept"
   end
 
+  delete '/users/:followee_id/follow' do |followee_id|
+
+    require 'pry'
+    binding.pry
+     # temp hardcode
+    follower_id = params["follower_id"] || 2
+
+    delete_me = FollowService::Follow.where(follower_id: follower_id, followee_id: followee_id).id
+    FollowService::Follow.destroy(delete_me)
+  end
+
   post '/users/:followee_id/follow' do |followee_id|
-    # require 'pry'
+    require 'pry'
 
+    binding.pry
     # temp hardcode
-    follower_id = params["follower_id"] || 1
+    follower_id = params["follower_id"] || 2
 
-    follow = FollowService::Follow.create!(
+    follow = FollowService::Follow.find_or_create_by(
       followee_id: FollowService::User.find_or_create_by(id: followee_id ).id,
       follower_id: FollowService::User.find_or_create_by(id: follower_id ).id
     )
@@ -79,35 +91,10 @@ class FollowService::App < Sinatra::Base
     # etag Digest::SHA1.digest(json_followers)
 
     content_type :json
-    [201, json_followers]
+    [200, json_followers]
   end
 
-  get '/users/:id/followers' do
-
-    # require 'pry'
-    # binding.pry
-
-    id = params['id']
-    user = FollowService::User.find(id)
-
-    # This is not foolproof. If the user were to refresh during a second when there were an equal number
-    # of follows and unfollows they'd not be alerted to the change on subsequent refreshes.
-    # Alternatively a more precise time measure could be used or a DB rowversion.
-
-    latest = user.follows_of_me.latest
-    count = user.follows_of_me.count
-
-    etag latest.to_s + count.to_s
-
-    json_followers = user.followers.to_json
-
-    ## if this were being paged I'd etag the digest of the page instead. 
-    # etag Digest::SHA1.digest(json_followers)
-
-    content_type :json
-    [201, json_followers]
-  end
-
+# TODO: put this functionality into a version of the GET follow route with query string to distinguish
   get '/users/:id/followees' do
 
     id = params['id']
@@ -120,11 +107,7 @@ class FollowService::App < Sinatra::Base
     followees = user.followees
 
     content_type :json
-    [201, followees.to_json]
-
-  end
-
-  def create_follow
+    [200, followees.to_json]
 
   end
 
